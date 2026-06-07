@@ -1,16 +1,17 @@
 import TabButton from "@/components/TabButton";
+import TabFloatingButton from "@/components/TabFloatingButton";
 import {
+  FontAwesome6,
   Ionicons,
   MaterialCommunityIcons,
-  FontAwesome6,
 } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { Surface, useTheme } from "react-native-paper";
 
 const TAB_HEIGHT = 70;
-const FAB_SIZE = 60;
+const FAB_SIZE = 70;
 
 const tabs = [
   {
@@ -58,66 +59,61 @@ export default function Layout() {
   const theme = useTheme();
 
   return (
-    <>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { height: TAB_HEIGHT },
-        }}
-        tabBar={({ navigation, state }) => {
-          const currentRoute = state.routes[state.index].name;
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { height: TAB_HEIGHT },
+      }}
+      tabBar={({ navigation, state }) => {
+        const currentRoute = state.routes[state.index].name;
 
-          return (
-            <Surface
-              style={{
-                flexDirection: "row",
-                height: TAB_HEIGHT,
-                justifyContent: "space-around",
-                paddingTop: 7,
-              }}
-            >
-              {tabs.map((tab, i) => {
-                if (tab.name === "fab-space") {
-                  return <View key={i} style={{ flex: 1 }} />;
-                }
+        return (
+          <Surface
+            style={{
+              flexDirection: "row",
+              height: TAB_HEIGHT,
+              justifyContent: "space-around",
+              paddingTop: 7,
+              borderTopWidth: 1,
+              borderTopColor: "#343A42",
+              backgroundColor: theme.colors.background,
+            }}
+          >
+            {tabs.map((tab, i) => {
+              if (tab.name === "fab-space") {
+                return <View key={i} style={{ flex: 1 }} />;
+              }
 
-                const isFocused = currentRoute === tab.name;
+              const isFocused = currentRoute === tab.name;
 
-                return (
-                  <TabButton
-                    key={tab.name}
-                    label={tab.label}
-                    icon={(color) => tab.icon?.(color)}
-                    onPress={() => navigation.navigate(tab.name)}
-                    theme={theme}
-                    focused={isFocused}
-                    style={tab.style}
-                  />
-                );
-              })}
+              return (
+                <TabButton
+                  key={tab.name}
+                  label={tab.label}
+                  icon={(color) => tab.icon?.(color)}
+                  onPress={() => navigation.navigate(tab.name)}
+                  theme={theme}
+                  focused={isFocused}
+                  style={tab.style}
+                />
+              );
+            })}
 
-              <Pressable
-                onPress={() => navigation.navigate("play")}
-                style={{
-                  position: "absolute",
-                  alignSelf: "center",
-                  bottom: TAB_HEIGHT - FAB_SIZE / 2,
-                  width: FAB_SIZE,
-                  height: FAB_SIZE,
-                  borderRadius: FAB_SIZE / 2,
-                  backgroundColor: theme.colors.primary,
-                }}
-              />
-            </Surface>
-          );
-        }}
-      >
-        <Tabs.Screen name="index" />
-        <Tabs.Screen name="content" />
-        <Tabs.Screen name="play" options={{ href: null }} />
-        <Tabs.Screen name="insights" />
-        <Tabs.Screen name="account" />
-      </Tabs>
-    </>
+            <TabFloatingButton
+              FAB_SIZE={FAB_SIZE}
+              TAB_HEIGHT={TAB_HEIGHT}
+              navigation={navigation}
+              theme={theme}
+            />
+          </Surface>
+        );
+      }}
+    >
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="content" />
+      <Tabs.Screen name="play" options={{ href: null }} />
+      <Tabs.Screen name="insights" />
+      <Tabs.Screen name="account" />
+    </Tabs>
   );
 }

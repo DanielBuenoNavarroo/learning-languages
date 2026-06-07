@@ -15,6 +15,8 @@ export function Screen({ children, style }: Props) {
         {
           flex: 1,
           backgroundColor: theme.colors.background,
+          paddingTop: 40,
+          paddingHorizontal: 16,
         },
         style,
       ]}

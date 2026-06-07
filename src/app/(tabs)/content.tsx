@@ -1,13 +1,15 @@
+import KanjiIcon from "@/components/KanjiIcon";
 import { Screen } from "@/components/Screen";
 import React from "react";
 import { Text } from "react-native-paper";
 
-const content = () => {
+const ContentScreen = () => {
   return (
     <Screen>
-      <Text>content</Text>
+      <Text>ContentScreen</Text>
+      <KanjiIcon char="日" size={50} color="white" />
     </Screen>
   );
 };
 
-export default content;
+export default ContentScreen;

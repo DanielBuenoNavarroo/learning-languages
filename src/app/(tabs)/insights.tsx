@@ -2,12 +2,12 @@ import { Screen } from "@/components/Screen";
 import React from "react";
 import { Text } from "react-native-paper";
 
-const insights = () => {
+const InsightsScreen = () => {
   return (
     <Screen>
-      <Text>insights</Text>
+      <Text>InsightsScreen</Text>
     </Screen>
   );
 };
 
-export default insights;
+export default InsightsScreen;

@@ -3,11 +3,11 @@ import { ThemeContext } from "@/themes/ThemeContext";
 import { useContext } from "react";
 import { Button, Text } from "react-native-paper";
 
-const account = () => {
+const AccountScreen = () => {
   const { mode, setMode } = useContext(ThemeContext);
   return (
     <Screen>
-      <Text>account</Text>
+      <Text>AccountScreen</Text>
       <Text>Modo actual: {mode}</Text>
 
       <Button onPress={() => setMode("light")}>Claro</Button>
@@ -17,4 +17,4 @@ const account = () => {
   );
 };
 
-export default account;
+export default AccountScreen;
