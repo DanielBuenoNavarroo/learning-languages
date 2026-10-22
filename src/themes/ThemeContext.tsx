@@ -5,13 +5,13 @@ import { darkTheme, lightTheme } from "./theme";
 
 export const ThemeContext = createContext({
   theme: lightTheme,
-  mode: "light",
+  mode: "dark",
   setMode: (mode: "light" | "dark" | "system") => {},
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const systemScheme = useColorScheme();
-  const [mode, setMode] = useState<"light" | "dark" | "system">("system");
+  const [mode, setMode] = useState<"light" | "dark" | "system">("dark");
 
   useEffect(() => {
     AsyncStorage.getItem("theme-mode").then((value) => {

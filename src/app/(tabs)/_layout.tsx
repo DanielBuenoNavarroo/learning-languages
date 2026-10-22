@@ -1,12 +1,9 @@
 import TabButton from "@/components/TabButton";
 import TabFloatingButton from "@/components/TabFloatingButton";
-import {
-  FontAwesome6,
-  Ionicons,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import { AntDesign } from '@react-native-vector-icons/ant-design';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { FontAwesome6 } from '@react-native-vector-icons/fontawesome6';
 import { Tabs } from "expo-router";
-import React from "react";
 import { View } from "react-native";
 import { Surface, useTheme } from "react-native-paper";
 
@@ -25,8 +22,8 @@ const tabs = [
     name: "content",
     label: "Content",
     icon: (color: string) => (
-      <MaterialCommunityIcons
-        name="folder-multiple-outline"
+      <AntDesign
+        name="folder-open"
         size={28}
         color={color}
       />
@@ -55,6 +52,8 @@ const tabs = [
   },
 ];
 
+const HIDDEN_ON = ["play"];
+
 export default function Layout() {
   const theme = useTheme();
 
@@ -66,6 +65,8 @@ export default function Layout() {
       }}
       tabBar={({ navigation, state }) => {
         const currentRoute = state.routes[state.index].name;
+
+        if (HIDDEN_ON.includes(currentRoute)) return null;
 
         return (
           <Surface
@@ -102,7 +103,6 @@ export default function Layout() {
             <TabFloatingButton
               FAB_SIZE={FAB_SIZE}
               TAB_HEIGHT={TAB_HEIGHT}
-              navigation={navigation}
               theme={theme}
             />
           </Surface>

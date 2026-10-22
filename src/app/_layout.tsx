@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import * as Font from "expo-font";
+import { ProgressProvider } from "@/components/context/ProgressContext";
 
 export default function RootLayout() {
   return (
@@ -32,9 +33,11 @@ function ThemedApp() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider theme={theme}>
         <SafeAreaProvider>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
+          <ProgressProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+          </ProgressProvider>
         </SafeAreaProvider>
       </PaperProvider>
     </GestureHandlerRootView>

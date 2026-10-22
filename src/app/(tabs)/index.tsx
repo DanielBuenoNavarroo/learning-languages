@@ -3,7 +3,8 @@ import { Image } from "expo-image";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "react-native-paper";
 
-import { Feather, Entypo } from "@expo/vector-icons";
+import { Feather } from '@react-native-vector-icons/feather';
+import { Entypo } from '@react-native-vector-icons/entypo';
 
 const IndexScreen = () => {
   const scrollY = new Animated.Value(0);

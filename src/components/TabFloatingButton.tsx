@@ -1,22 +1,21 @@
-import React from "react";
 import { Pressable, View } from "react-native";
 import { MD3Theme, Surface } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { AntDesign } from '@react-native-vector-icons/ant-design';
 import { NavigationHelpers, ParamListBase } from "@react-navigation/native";
 import { BottomTabNavigationEventMap } from "@react-navigation/bottom-tabs";
 import Svg, { Circle } from "react-native-svg";
+import { useProgress } from "./context/ProgressContext";
+import { router } from "expo-router";
 
 type Props = {
   TAB_HEIGHT: number;
   FAB_SIZE: number;
   theme: MD3Theme;
-  navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>;
 };
 
 const TabFloatingButton = ({
   FAB_SIZE,
   TAB_HEIGHT,
-  navigation,
   theme,
 }: Props) => {
   const BUTTON_SIZE = FAB_SIZE - 20;
@@ -24,7 +23,7 @@ const TabFloatingButton = ({
   const RING_RADIUS = RING_SIZE / 2 - 4;
   const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-  const progress = 0.0;
+  const { progress } = useProgress();
 
   return (
     <Surface
@@ -97,7 +96,7 @@ const TabFloatingButton = ({
 
       {/* Navigation button */}
       <Pressable
-        onPress={() => navigation.navigate("play")}
+        onPress={() => router.navigate("/play")}
         style={{
           width: BUTTON_SIZE,
           height: BUTTON_SIZE,
@@ -107,7 +106,7 @@ const TabFloatingButton = ({
           backgroundColor: "white",
         }}
       >
-        <MaterialCommunityIcons name="location-exit" size={28} />
+        <AntDesign name="logout" size={28} />
       </Pressable>
     </Surface>
   );
