@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { Button, Text, useTheme } from "react-native-paper";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProgress } from "@/components/context/ProgressContext";
 import { useSRS } from "@/hooks/useSRS";
 import { LevelBars } from "@/components/LevelBars";
@@ -20,43 +20,43 @@ import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
 } from "expo-speech-recognition";
+import FontAwesome6 from "@react-native-vector-icons/fontawesome6";
 
 const PlayScreen = () => {
   const [text, setText] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [showAudio, setShowAudio] = useState(false);
+  const [showLearn, setShowLearn] = useState(true);
+  const [showNext, setShowNext] = useState(false);
   const [listening, setListening] = useState(false);
+  const [speechAvailable, setSpeechAvailable] = useState(false);
+  const [hasFailedOnce, setHasFailedOnce] = useState(false);
+  const [updatedLevel, setUpdatedLevel] = useState<number | null>(null);
 
   const theme = useTheme();
-  const { progress, setProgress } = useProgress();
-  const { nextWord, markCorrect, markWrong, markSolution, reload } = useSRS();
+  const { progress, learnedToday, incrementProgress } = useProgress();
+  const {
+    nextWord,
+    markCorrect,
+    markWrong,
+    markSolution,
+    reload,
+    getUpdatedState,
+    getLearnedWords,
+    deleteAllData,
+  } = useSRS();
 
-  if (!nextWord || !nextWord.word) return;
+  useEffect(() => {
+    setSpeechAvailable(ExpoSpeechRecognitionModule?.isRecognitionAvailable());
+    setShowAudio(false);
+  }, []);
 
-  const checkAnswer = () => {
-    const normalize = (value: string) =>
-      value.trim().toLocaleLowerCase("de-DE");
+  useEffect(() => {
+    setShowLearn(text.trim() != "" ? false : true);
+    setPlaceholder("");
+  }, [text]);
 
-    if (normalize(text) === normalize(nextWord.word)) {
-      markCorrect();
-    } else {
-      markWrong();
-    }
-
-    setText("");
-  };
-
-  const show = () => {
-    setPlaceholder(nextWord.word);
-  };
-
-  const audio = () => {
-    Speech.speak(nextWord.word, {
-      voice: "de-de-x-deg-network",
-      pitch: 1,
-      language: "de-DE",
-    });
-  };
+  useEffect(() => {}, [nextWord?.id]);
 
   useSpeechRecognitionEvent("start", () => {
     setListening(true);
@@ -76,10 +76,80 @@ const PlayScreen = () => {
 
   useSpeechRecognitionEvent("error", (event) => {
     setListening(false);
-    console.error("Error de reconocimiento:", event.error, event.message);
+    console.error("Error de reconocimiento:", event.error);
   });
 
+  if (!nextWord || !nextWord.word) {
+    return (
+      <Screen>
+        <Text style={{ color: "white" }}>Cargando...</Text>
+      </Screen>
+    );
+  }
+
+  const normalize = (value: string) => value.trim().toLocaleLowerCase("de-DE");
+
+  const checkAnswer = async () => {
+    let current = await getUpdatedState(nextWord.id);
+
+    if (!current) {
+      current = {
+        id: nextWord.id,
+        srsLevel: nextWord.srsLevel,
+        correctStreak: nextWord.correctStreak,
+        wrongCount: nextWord.wrongCount,
+        nextReview: nextWord.nextReview,
+        lastSeen: nextWord.lastSeen,
+      };
+    }
+
+    const correct = normalize(text) === normalize(nextWord.word);
+
+    if (correct) {
+      if (!hasFailedOnce) {
+        await markCorrect();
+      } else {
+        await markSolution();
+      }
+
+      const updated = await getUpdatedState(nextWord.id);
+
+      setUpdatedLevel(updated?.srsLevel ?? current.srsLevel);
+
+      await incrementProgress();
+
+      audio();
+      setShowNext(true);
+    } else {
+      show()
+    }
+  };
+
+  const show = async () => {
+    setText("")
+    setPlaceholder(nextWord.word);
+    setShowAudio(true);
+    setShowLearn(false);
+
+    await markWrong();
+
+    setHasFailedOnce(true);
+  };
+
+  const audio = () => {
+    Speech.speak(nextWord.word, {
+      voice: "de-de-x-deg-network",
+      pitch: 1,
+      language: "de-DE",
+    });
+  };
+
   const listen = async () => {
+    if (!speechAvailable) {
+      console.warn("El reconocimiento no está disponible en este dispositivo.");
+      return;
+    }
+
     try {
       const permission =
         await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -88,8 +158,6 @@ const PlayScreen = () => {
         console.warn("No se concedió permiso para usar el micrófono.");
         return;
       }
-
-      setText("");
 
       ExpoSpeechRecognitionModule.start({
         lang: "de-DE",
@@ -101,11 +169,30 @@ const PlayScreen = () => {
     }
   };
 
+  const next = () => {
+    setHasFailedOnce(false);
+    setShowAudio(false);
+    setUpdatedLevel(null);
+    setShowNext(false);
+    setText("");
+    setPlaceholder("");
+    reload();
+  };
+
+  const showLearnedWords = async () => {
+    const learned = await getLearnedWords();
+    console.log("Learned words::: \n", learned);
+  };
+
+  const handleReset = async () => {
+    await deleteAllData();
+    await reload();
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={0}
     >
       <Screen>
         {/* Top */}
@@ -114,24 +201,31 @@ const PlayScreen = () => {
             <Ionicons name="home-outline" size={28} color="white" />
           </Pressable>
 
-          <View style={styles.progressBarBackground}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${Math.max(0, Math.min(1, progress)) * 100}%`,
-                  backgroundColor: theme.colors.primary,
-                },
-              ]}
-            />
+          <View style={{ flex: 1, justifyContent: "center", gap: 2 }}>
+            <Text style={{ color: "white", fontSize: 10 }}>
+              {learnedToday}/50
+            </Text>
+            <View style={styles.progressBarBackground}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${Math.max(0, Math.min(1, progress)) * 100}%`,
+                    backgroundColor: theme.colors.primary,
+                  },
+                ]}
+              />
+            </View>
           </View>
         </View>
 
         {/* Question */}
         <View style={styles.card}>
-          <View style={{}}>
-            <LevelBars level={nextWord.srsLevel} />
-          </View>
+          <LevelBars
+            level={updatedLevel ?? nextWord.srsLevel}
+            previousLevel={nextWord.srsLevel}
+            correct={showNext}
+          />
 
           <View style={[styles.tag, { alignSelf: "stretch" }]}>
             <TextInput
@@ -162,34 +256,82 @@ const PlayScreen = () => {
               justifyContent: "center",
               marginLeft: 12,
               flexDirection: "row",
-              gap: 16
+              gap: 16,
             }}
           >
-            <Pressable
-              onPress={() => {
-                if (listening) {
-                  ExpoSpeechRecognitionModule.stop();
-                } else {
-                  listen();
-                }
-              }}
-            >
-              <AntDesign
-                name="audio"
-                size={28}
-                color={listening ? "#838aba" : "white"}
-              />
-            </Pressable>
-            {showAudio && (
-              <Pressable onPress={audio}>
-                <Ionicons name="volume-high-outline" size={28} color={"white"} />
+            {speechAvailable && (
+              <Pressable
+                onPress={() => {
+                  if (listening) {
+                    ExpoSpeechRecognitionModule.stop();
+                  } else {
+                    listen();
+                  }
+                }}
+              >
+                <AntDesign
+                  name="audio"
+                  size={28}
+                  color={listening ? "#838aba" : "white"}
+                />
               </Pressable>
             )}
+
+            {showAudio && (
+              <Pressable onPress={audio}>
+                <Ionicons
+                  name="volume-high-outline"
+                  size={28}
+                  color={"white"}
+                />
+              </Pressable>
+            )}
+
+            <Pressable onPress={handleReset}>
+              <FontAwesome6 name="file-word" size={28} color={"white"} />
+            </Pressable>
           </View>
-          <Pressable style={styles.bottomButton} onPress={show}>
-            <Ionicons name="chatbox-ellipses" size={18} color={"#474e57"} />
-            <Text style={styles.bottomText}>Aprender</Text>
-          </Pressable>
+
+          {showNext ? (
+            <Pressable style={styles.bottomButtonNext} onPress={next}>
+              <Ionicons
+                name="arrow-forward-circle"
+                size={18}
+                color={"#474e57"}
+              />
+              <Text style={styles.bottomText}>Siguiente</Text>
+            </Pressable>
+          ) : showLearn ? (
+            <Pressable style={styles.bottomButton} onPress={show}>
+              <Ionicons name="chatbox-ellipses" size={18} color={"#474e57"} />
+              <Text style={styles.bottomText}>Aprender</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={
+                text.trim() === ""
+                  ? styles.bottomButtonDisabled
+                  : styles.bottomButton
+              }
+              onPress={checkAnswer}
+              disabled={text.trim() === ""}
+            >
+              <FontAwesome6
+                name="circle-check"
+                size={18}
+                color={text.trim() === "" ? "#525252" : "#474e57"}
+              />
+              <Text
+                style={
+                  text.trim() === ""
+                    ? styles.bottomTextDisabled
+                    : styles.bottomText
+                }
+              >
+                Validar
+              </Text>
+            </Pressable>
+          )}
         </View>
       </Screen>
     </KeyboardAvoidingView>
@@ -262,7 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 24,
-    padding: 8,
+    padding: 10,
     borderRadius: 24,
     width: "100%",
   },
@@ -275,12 +417,42 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 12,
     gap: 12,
+    elevation: 4,
+  },
+
+  bottomButtonDisabled: {
+    backgroundColor: "#cfcfcf",
+    borderRadius: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    padding: 12,
+    gap: 12,
+    opacity: 0.6,
+    elevation: 0,
+  },
+
+  bottomButtonNext: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    padding: 12,
+    gap: 12,
+    elevation: 4,
   },
 
   bottomText: {
     fontSize: 16,
     color: "#343A42",
     borderRadius: 8,
-    fontWeight: 700
+    fontWeight: 700,
+  },
+
+  bottomTextDisabled: {
+    fontSize: 16,
+    color: "#525252",
+    fontWeight: 700,
   },
 });

@@ -17,3 +17,11 @@ export type GermanWord = {
 };
 
 export type WordState = Due & GermanWord;
+
+type ProgressContextType = {
+  progress: number;
+  learnedToday: number;
+  weeklyProgress: Record<string, number>;
+  incrementProgress: () => Promise<void>;
+  resetProgress: () => Promise<void>;
+};

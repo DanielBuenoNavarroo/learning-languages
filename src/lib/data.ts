@@ -2191,7 +2191,7 @@ export const GermanWords: GermanWord[] = [
     "id": 199,
     "word": "die Tomate",
     "plural": "die Tomaten",
-    "trans": "jitomate",
+    "trans": "tomate",
     "type": "sustantivo",
     "level": "a1"
   },
@@ -2463,7 +2463,7 @@ export const GermanWords: GermanWord[] = [
     "id": 233,
     "word": "die Karte",
     "plural": "die Karten",
-    "trans": "boleto",
+    "trans": "tarjeta",
     "type": "sustantivo",
     "level": "a1"
   },
@@ -2471,7 +2471,7 @@ export const GermanWords: GermanWord[] = [
     "id": 234,
     "word": "die Fahrkarte",
     "plural": "die Fahrkarten",
-    "trans": "boleto",
+    "trans": "ticket de transporte",
     "type": "sustantivo",
     "level": "a1"
   },
@@ -2479,7 +2479,7 @@ export const GermanWords: GermanWord[] = [
     "id": 235,
     "word": "das Ticket",
     "plural": "die Tickets",
-    "trans": "boleto",
+    "trans": "ticket",
     "type": "sustantivo",
     "level": "a1"
   },

@@ -2,11 +2,13 @@ import { Screen } from "@/components/Screen";
 import { Image } from "expo-image";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "react-native-paper";
-
-import { Feather } from '@react-native-vector-icons/feather';
-import { Entypo } from '@react-native-vector-icons/entypo';
+import { Feather } from "@react-native-vector-icons/feather";
+import { Entypo } from "@react-native-vector-icons/entypo";
+import { useProgress } from "@/components/context/ProgressContext";
 
 const IndexScreen = () => {
+  const { progress, learnedToday, weeklyProgress } = useProgress();
+
   const scrollY = new Animated.Value(0);
 
   const shadowOpacity = scrollY.interpolate({
@@ -15,11 +17,34 @@ const IndexScreen = () => {
     extrapolate: "clamp",
   });
 
-  const days = Array.from({ length: 7 }).map((_, i) =>
-    new Date(2024, 0, i + 1).toLocaleDateString("en-GB", { weekday: "short" }),
-  );
+  const today = new Date();
 
-  const today = new Date().toLocaleDateString("en-GB", { weekday: "short" });
+  const getDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const monday = new Date(today);
+  const dayOfWeek = (today.getDay() + 6) % 7;
+  monday.setDate(today.getDate() - dayOfWeek);
+  monday.setHours(0, 0, 0, 0);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+
+    return {
+      key: getDateKey(date),
+      label: date.toLocaleDateString("es-Es", { weekday: "short" }),
+      isFuture: getDateKey(date) > getDateKey(today),
+      isToday: getDateKey(date) === getDateKey(today),
+    };
+  });
+
+  const completedToday = progress >= 1;
 
   return (
     <Screen>
@@ -48,10 +73,10 @@ const IndexScreen = () => {
           }}
         >
           <Image
-            source={require("../../assets/img/flags/Flag_of_Japan.png")}
+            source={require("../../assets/img/flags/german-flag.png")}
             style={{ width: 45, height: 25, borderRadius: 5 }}
           />
-          <Text>Change Language</Text>
+          <Text>German</Text>
         </Pressable>
       </Animated.View>
       <Animated.ScrollView>
@@ -74,11 +99,13 @@ const IndexScreen = () => {
             justifyContent: "space-between",
           }}
         >
-          <Text>0/50 cards</Text>
+          <Text style={{ color: "#999797" }}>{learnedToday} / 50 cards</Text>
+
           <Pressable>
-            <Text>Change goal</Text>
+            <Text style={{ color: "#b561d6" }}>Change goal</Text>
           </Pressable>
         </View>
+
         <View
           style={{
             flexDirection: "row",
@@ -87,8 +114,12 @@ const IndexScreen = () => {
           }}
         >
           {days.map((day) => {
+            const count = weeklyProgress[day.key] ?? 0;
+            const completed = count >= 50;
+            const showResult = !day.isFuture && !day.isToday;
+
             return (
-              <View style={{ alignItems: "center", gap: 10 }} key={day}>
+              <View key={day.key} style={{ alignItems: "center", gap: 10 }}>
                 <Pressable
                   style={[
                     {
@@ -100,32 +131,47 @@ const IndexScreen = () => {
                       alignItems: "center",
                       justifyContent: "center",
                     },
-                    day === "Mon" && {
-                      borderColor: "transparent",
-                      backgroundColor: "#b561d6b7",
-                    },
-                    day === "Tue" && {
-                      borderColor: "transparent",
-                      backgroundColor: "#39ac2fde",
-                    },
+
+                    showResult &&
+                      completed && {
+                        borderColor: "transparent",
+                        backgroundColor: "#39ac2fde",
+                      },
+
+                    showResult &&
+                      !completed && {
+                        borderColor: "transparent",
+                        backgroundColor: "#b561d6b7",
+                      },
+
+                    day.isToday &&
+                      completed && {
+                        borderColor: "transparent",
+                        backgroundColor: "#39ac2fde",
+                      },
                   ]}
                 >
-                  {day === "Mon" && (
+                  {showResult && completed && (
+                    <Feather name="check" size={20} color="#19f804" />
+                  )}
+
+                  {showResult && !completed && (
                     <Entypo name="cross" size={20} color="#e2b2f5" />
                   )}
-                  {day === "Tue" && (
+
+                  {day.isToday && completed && (
                     <Feather name="check" size={20} color="#19f804" />
                   )}
                 </Pressable>
+
                 <Text
                   style={[
                     { borderRadius: 5, padding: 3 },
-                    day === today && {
-                      backgroundColor: "#444444de",
-                    },
+                    day.isToday && { backgroundColor: "#444444de" },
                   ]}
                 >
-                  {day}
+                  {day.label.charAt(0).toUpperCase() +
+                    day.label.slice(1).toLowerCase()}
                 </Text>
               </View>
             );
