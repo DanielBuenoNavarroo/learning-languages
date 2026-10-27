@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import * as SQLite from "expo-sqlite";
+import { useEffect, useRef, useState } from "react";
 import { GermanWords } from "@/lib/data";
 import { Due, WordState } from "@/types/types";
 
@@ -163,19 +163,31 @@ export const useSRS = () => {
 
   // Buscar una palabra que todavía no esté registrada
   const findNextNewWord = async (database: SQLite.SQLiteDatabase) => {
+    // 1. Obtener IDs ya aprendidos
     const rows = await database.getAllAsync<{ id: number }>(
       "SELECT id FROM user_word_state",
     );
 
     const learnedIds = new Set(rows.map((row) => row.id));
-    const newWords = GermanWords.filter((word) => !learnedIds.has(word.id));
 
-    if (newWords.length === 0) {
-      return null;
+    // 2. Orden de niveles
+    const levelOrder = ["a1", "a2", "b1", "b2", "c1", "c2"];
+
+    // 3. Buscar el primer nivel que tenga palabras nuevas
+    for (const level of levelOrder) {
+      const newWordsInLevel = GermanWords.filter(
+        (word) => word.level === level && !learnedIds.has(word.id),
+      );
+
+      if (newWordsInLevel.length > 0) {
+        // 4. Elegir una palabra aleatoria dentro del nivel
+        const randomIndex = Math.floor(Math.random() * newWordsInLevel.length);
+        return newWordsInLevel[randomIndex];
+      }
     }
 
-    const randomIndex = Math.floor(Math.random() * newWords.length);
-    return newWords[randomIndex];
+    // Si no queda ninguna palabra nueva
+    return null;
   };
 
   const weightedRandom = (items: Due[], getWeight: (item: Due) => number) => {
@@ -204,7 +216,6 @@ export const useSRS = () => {
     let newCount = await countNewWords(dbToUse);
     const learningCount = await countLearningWords(dbToUse);
 
-    // ⭐ SOLO insertar nuevas si hay menos de 15 aprendiendo
     if (learningCount < MAX_LEARNING_WORDS) {
       while (newCount < MIN_NEW_WORDS && newCount < MAX_NEW_WORDS) {
         const nextBase = await findNextNewWord(dbToUse);
@@ -247,7 +258,7 @@ export const useSRS = () => {
     const getWeight = (row: Due) => {
       switch (row.srsLevel) {
         case 1:
-          return 5; // nuevas
+          return 5;
         case 2:
           return 4;
         case 3:

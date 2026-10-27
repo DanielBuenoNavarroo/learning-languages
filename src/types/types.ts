@@ -10,9 +10,9 @@ export type Due = {
 export type GermanWord = {
   id: number;
   word: string;
-  plural: string;
+  plural?: string;
   trans: string;
-  type: "sustantivo" | "verbo" | "adjetivo" | string;
+  type: "sustantivo" | "verbo" | "adjetivo" | "adverbio" | "otro" | string;
   level: "a1" | "a2" | "b1" | "b2" | "c1" | string;
 };
 

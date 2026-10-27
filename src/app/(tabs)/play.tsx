@@ -121,12 +121,12 @@ const PlayScreen = () => {
       audio();
       setShowNext(true);
     } else {
-      show()
+      show();
     }
   };
 
   const show = async () => {
-    setText("")
+    setText("");
     setPlaceholder(nextWord.word);
     setShowAudio(true);
     setShowLearn(false);
@@ -287,9 +287,9 @@ const PlayScreen = () => {
               </Pressable>
             )}
 
-            <Pressable onPress={handleReset}>
+            {/* <Pressable onPress={handleReset}>
               <FontAwesome6 name="file-word" size={28} color={"white"} />
-            </Pressable>
+            </Pressable> */}
           </View>
 
           {showNext ? (

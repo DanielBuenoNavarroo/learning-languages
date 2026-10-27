@@ -7,7 +7,7 @@ import { Entypo } from "@react-native-vector-icons/entypo";
 import { useProgress } from "@/components/context/ProgressContext";
 
 const IndexScreen = () => {
-  const { progress, learnedToday, weeklyProgress } = useProgress();
+  const { learnedToday, weeklyProgress } = useProgress();
 
   const scrollY = new Animated.Value(0);
 
@@ -43,8 +43,6 @@ const IndexScreen = () => {
       isToday: getDateKey(date) === getDateKey(today),
     };
   });
-
-  const completedToday = progress >= 1;
 
   return (
     <Screen>

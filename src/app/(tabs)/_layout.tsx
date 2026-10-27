@@ -52,7 +52,7 @@ const tabs = [
   },
 ];
 
-const HIDDEN_ON = ["play"];
+const HIDDEN_ON = ["play", "decks"];
 
 export default function Layout() {
   const theme = useTheme();
